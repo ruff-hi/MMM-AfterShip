@@ -1,264 +1,363 @@
+/* global Module */
+
 /* Magic Mirror
  * Module: MMM-AfterShip
  *
- * By Mykle1
+ * By vanhoekd
+ * 
  *
+ * MIT Licensed.
  */
-Module.register("MMM-AfterShip", {
 
-    // Module config defaults.           // Make all changes in your config.js file
-    defaults: {
-        apiKey: '', // Your free API Key from aftership.com
-        useHeader: false, // false if you don't want a header      
-        header: "", // Change in config file. useHeader must be true
-        maxWidth: "300px",
-        animationSpeed: 3000, // fade speed
-        initialLoadDelay: 3250,
-        retryDelay: 2500,
-        rotateInterval: 30 * 1000, // 30 second rotation of items
-        updateInterval: 10 * 60 * 1000, // 10 minutes
-        apiLanguage: "en",
-        dateTimeFormat: "ddd, MMM DD, YYYY, h:mm a",
-        dateFormat: "ddd, MMM DD, YYYY"
-    },
-
-    getStyles: function() {
-        return ["MMM-AfterShip.css"];
-    },
-
-    start: function() {
-        Log.info("Starting module: " + this.name);
-        this.sendSocketNotification('CONFIG', this.config);
-
-        requiresVersion: "2.1.0",
-
-        //  Set locale.
-        this.url = "";
-        this.AfterShip = {};
-        this.activeItem = 0;
-        this.rotateInterval = null;
-        this.scheduleUpdate();
-    },
-
-    getDom: function() {
-
-        var wrapper = document.createElement("div");
-        wrapper.className = "wrapper";
-        wrapper.style.maxWidth = this.config.maxWidth;
-
-        if (!this.loaded) {
-            wrapper.innerHTML = "Where's my shit?";
-            wrapper.classList.add("bright", "light", "small");
-            return wrapper;
-        }
-
-        if (this.config.useHeader != false) {
-            var header = document.createElement("header");
-            header.classList.add("xsmall", "bright", "header");
-            header.innerHTML = this.config.header;
-            wrapper.appendChild(header);
-        }
+Module.register("MMM-AfterShip",{
+	// Define module defaults
+	defaults: {
+		updateInterval: 2 * 60 * 1000, // Update every 2 minutes.
+		animationSpeed: 2000,
+		fade: true,
+		fadePoint: 0.25, // Start on 1/4th of the list.
+        initialLoadDelay: 0, // start delay seconds.
 		
-		// If there are deliveries pending, go through all the data
-		if (this.AfterShip.length != 0){
-
-
-        //	Rotating my data
-        var AfterShip = this.AfterShip;
-        var AfterShipKeys = Object.keys(this.AfterShip);
-        if (AfterShipKeys.length > 0) {
-            if (this.activeItem >= AfterShipKeys.length) {
-                this.activeItem = 0;
-            }
-            var AfterShip = this.AfterShip[AfterShipKeys[this.activeItem]];
-            var checkpoints = AfterShip['checkpoints']; // another array inside the first array
-            //	console.log(checkpoints); // for checking
-            //	console.log(this.AfterShip); // for checking
-
-
-            // My data begins here
-
-            var top = document.createElement("div");
-            top.classList.add("list-row");
-
-            // Title of shipment (if any)
-            var Title = document.createElement("div");
-            Title.classList.add("xsmall", "bright", "Title");
-            Title.innerHTML = "Title: " + AfterShip.title;
-            wrapper.appendChild(Title);
-
-            // ID of shipment
-            var ID = document.createElement("div");
-            ID.classList.add("xsmall", "bright", "ID");
-            ID.innerHTML = "ID # : " + AfterShip.id;
-            wrapper.appendChild(ID);
-
-
-            // Last update on shipment
-            var lastUpdate = document.createElement("div");
-            lastUpdate.classList.add("xsmall", "bright", "lastUpdate");
-            lastUpdate.innerHTML = "Last update: " + moment(AfterShip.last_updated_at).local().format(this.config.dateTimeFormat);
-            wrapper.appendChild(lastUpdate);
-
-
-            // tracking number of shipment
-            var tracking_number = document.createElement("div");
-            tracking_number.classList.add("xsmall", "bright", "tracking_number");
-            tracking_number.innerHTML = "Tracking #: " + AfterShip.tracking_number;
-            wrapper.appendChild(tracking_number);
-
-
-            // Courier name
-            var slug = document.createElement("div");
-            slug.classList.add("xsmall", "bright", "courier");
-            slug.innerHTML = "Courier: " + (AfterShip.slug.toUpperCase());
-            wrapper.appendChild(slug);
-
-
-            // expected_delivery date
-            var expected_delivery = document.createElement("div");
-            expected_delivery.classList.add("xsmall", "bright", "expected_delivery");
-            if (AfterShip.expected_delivery != null) {
-                expected_delivery.innerHTML = "Expected delivery on: " + moment(AfterShip.expected_delivery).local().format(this.config.dateFormat);
-                wrapper.appendChild(expected_delivery);
-            } else {
-                expected_delivery.innerHTML = "No expected delivery date!";
-                wrapper.appendChild(expected_delivery);
-            }
-
-            // shipment_type
-            var shipment_type = document.createElement("div");
-            shipment_type.classList.add("xsmall", "bright", "shipment_type");
-            if (AfterShip.shipment_type != null) {
-                shipment_type.innerHTML = "Shipping: " + AfterShip.shipment_type;
-                wrapper.appendChild(shipment_type);
-            } else {
-                shipment_type.innerHTML = "Shipping: If you're lucky!";
-                wrapper.appendChild(shipment_type);
-            }
-
-            // status oh shipment
-            var tag = document.createElement("div");
-            tag.classList.add("xsmall", "bright", "status");
-            tag.innerHTML = "Status: " + AfterShip.tag;
-            wrapper.appendChild(tag);
-
-            // objects that are inside an array that is inside an object
-            // checkpoint location // only the last object in the array = checkpoints[checkpoints.length -1] @Cowboysdude //
-            var location = document.createElement("div");
-            location.classList.add("xsmall", "bright", "location");
-            if (AfterShip.checkpoints.length != 0) {
-                location.innerHTML = "Location: " + AfterShip.checkpoints[checkpoints.length - 1].location; // only the last object in the array = checkpoints[checkpoints.length -1] //
-                wrapper.appendChild(location);
-            } else {
-                location.innerHTML = "Location: Who the fuck knows!";
-                wrapper.appendChild(location);
-            }
-
-
-            // objects that are inside an array that is inside an object
-            // checkpoint_time // only the last object in the array //
-            var checkpoint_time = document.createElement("div");
-            checkpoint_time.classList.add("xsmall", "bright", "checkpoint_time");
-            if (AfterShip.checkpoints.length != 0) {
-                checkpoint_time.innerHTML = "When: " + moment(AfterShip.checkpoints[checkpoints.length - 1].checkpoint_time).local().format(this.config.dateTimeFormat);
-                wrapper.appendChild(checkpoint_time);
-            } else {
-                checkpoint_time.innerHTML = "When: Who the fuck cares!";
-                wrapper.appendChild(checkpoint_time);
-            }
-
-
-            // objects that are inside an array that is inside an object
-            // message from checkpoint // only the last object in the array //
-            var message = document.createElement("div");
-            message.classList.add("xsmall", "bright", "message");
-            if (AfterShip.checkpoints.length != 0) {
-                message.innerHTML = "Message: " + AfterShip.checkpoints[checkpoints.length - 1].message;
-                wrapper.appendChild(message);
-            } else {
-                message.innerHTML = "Message: No data from courier!";
-                wrapper.appendChild(message);
-            }
-
-
-        } // <-- closes rotation 
-
-        return wrapper;
-
-		} else { // From deliveries pending if statement above
-			
-			// When there are no pending deliveries, do the following
-			var top = document.createElement("div");
-            top.classList.add("list-row");
-
-            // When no deliveries are pending
-            var nothing = document.createElement("div");
-            nothing.classList.add("small", "bright", "nothing");
-            nothing.innerHTML = "No deliveries pending!";
-            wrapper.appendChild(nothing);
-			
-			// Current date and time (wherever you are)
-            var date = document.createElement("div");
-            date.classList.add("small", "bright", "date");
-            date.innerHTML = moment().local().format(this.config.dateTimeFormat);
-            wrapper.appendChild(date);
+        domRefresh: 1000 * 30, // Refresh Dom each 30 s
 		
-		} // Closes else statement from deliveries pending if statement above
-
-		
-		return wrapper;	
-		
-    }, // <-- closes getDom
+        apiBase: 'https://api.aftership.com/v4/trackings',
+        api_key: '',
+		maximumEntries: 5,
+		critical_time: 0,
+		show_delivered: 0,
+	},
 	
+	requiresVersion: "2.1.0", // Required version of MagicMirror
+
+	// Define start sequence.
+	start: function() {
+		Log.info("Starting module: " + this.name);
+
+		// Set locale.
+		moment.locale(config.language);
+
+        this.shipments = [];
+		this.loaded = false;
+		this.scheduleUpdate(this.config.initialLoadDelay);
+
+		// Update DOM seperatly and not only on schedule Update
+		var self = this;
+		setInterval(function() {
+			self.updateDom(this.config.animationSpeed);
+		}, this.config.domRefresh);
+
+		this.updateTimer = null;
+
+	},   
 	
-    /////  Add this function to the modules you want to control with voice //////
+	// Define required scripts.
+	getStyles: function() {
+		return ["MMM-AfterShip.css", "font-awesome.css"];
+	},
 
-    notificationReceived: function(notification, payload) {
-        if (notification === 'HIDE_SHIPPING') {
-            this.hide(1000);
-        //    this.updateDom(300);
-        }  else if (notification === 'SHOW_SHIPPING') {
-            this.show(1000);
-        //   this.updateDom(300);
-        }
-            
-    },
+	// Define required scripts.
+	getScripts: function() {
+		return ["moment.js"];
+	}, 
+    
+	// Override dom generator.
+	getDom: function() {
+		var wrapper = document.createElement("div");
+
+		var currentTime = moment();
+//ruff
+		var today = moment().endOf("day");
+		var CutoffDate = new Date();
+		var numberOfDaysPrior = this.config.DropDeliveryDays;
+		//var numberOfDaysPrior = -2;
+		CutoffDate.setDate(CutoffDate.getDate() - numberOfDaysPrior);
+//ruff
 
 
-    processAfterShip: function(data) {
-        this.AfterShip = data;
-    //    console.log(this.AfterShip); // for checking //
-        this.loaded = true;
-    },
 
-    scheduleCarousel: function() {
-        //  console.log("Carousel of AfterShip fucktion!"); // for cheking //
-        this.rotateInterval = setInterval(() => {
-            this.activeItem++;
-            this.updateDom(this.config.animationSpeed);
-        }, this.config.rotateInterval);
-    },
+		if (!this.config.api_key) {
+			wrapper.innerHTML = "Invalid api key";
+			wrapper.className = "dimmed light small";
+			return wrapper;
+		}
+		
+		
+		
+		if (!this.loaded) {
+			wrapper.innerHTML = "Loading parcels ...";
+			wrapper.className = "dimmed light small";
+			return wrapper;
+		}
 
-    scheduleUpdate: function() {
-        setInterval(() => {
-            this.getAfterShip();
-        }, this.config.updateInterval);
-        this.getAfterShip(this.config.initialLoadDelay);
-    },
+		if (this.message) {
+			wrapper.innerHTML = this.message;
+			wrapper.className = "dimmed light small";
+			return wrapper;
+		}
+		
+		var table = document.createElement("table");
+		table.className = "small";
+		var displayedParcels = 0;
+		var row_header = document.createElement("tr");
+		table.appendChild(row_header);
+		var nameCell = document.createElement("th");
+		nameCell.className = "Name";
+		nameCell.innerHTML = "Parcel";
+		row_header.appendChild(nameCell);
+		
+		var statusCell = document.createElement("th");
+		statusCell.className = "Status";
+		statusCell.innerHTML = "Status";
+		row_header.appendChild(statusCell);
+		
+		var timeCell = document.createElement("th");
+		timeCell.className = "Time";
+		timeCell.innerHTML = "Days";
+		row_header.appendChild(timeCell);
+		
+		var deliveryCell = document.createElement("th");
+		deliveryCell.className = "delivery";
+		deliveryCell.innerHTML = "E/A Date";
+		row_header.appendChild(deliveryCell);
+		
+		var messageCell = document.createElement("th");
+		messageCell.className = "message";
+		messageCell.innerHTML = "Last Checkpoint";
+		row_header.appendChild(messageCell);
+		
+		for (var t in this.shipments) {
+			var shipments = this.shipments[t];
 
-    getAfterShip: function() {
-        this.sendSocketNotification('GET_AFTERSHIP', this.url);
-    },
+//ruff ... only display delivered items post cutoff date
+			if (shipments.status == 'Delivered'){
+				if (shipments.delivery_realdate < CutoffDate){
+					continue;
+				}
+			}
+//ruff ... only display delivered items post cutoff date
 
-    socketNotificationReceived: function(notification, payload) {
-        if (notification === "AFTERSHIP_RESULT") {
-            this.processAfterShip(payload);
-            if (this.rotateInterval == null) {
-                this.scheduleCarousel();
-            }
-            this.updateDom(this.config.animationSpeed);
-        }
-        this.updateDom(this.config.initialLoadDelay);
-    },
+			displayedParcels++;
+			if (displayedParcels > this.config.maximumEntries){
+				break;
+			}
+
+			var row = document.createElement("tr");
+			table.appendChild(row);
+
+//ruff - set parcel color			
+			var DelColor = ""
+
+			if (this.config.colorcode_delivered == 1){
+				if (shipments.status == 'Delivered'){
+					// date math differences are shown in milliseconds
+					// so a day is worth 86,400,000
+					if (today - shipments.delivery_realdate < 86400000){
+						DelColor = "Deliver "
+					} else {
+						DelColor = "DeliverToday "
+					}			
+				} else {
+					DelColor = "OnWay "
+				}
+			}
+//ruff - set parcel color			
+			
+			// Time
+			var nameCell2 = document.createElement("td");
+			nameCell2.className = DelColor + "name2";
+			nameCell2.innerHTML = shipments.name + ' ';
+			row.appendChild(nameCell2);
+
+			
+			var statusCell2 = document.createElement("td");
+			statusCell2.className = DelColor + "status2";
+			statusCell2.innerHTML =shipments.status;
+			row.appendChild(statusCell2);
+			
+			/* var historyCell2 = document.createElement("td");
+			depCell.className = "align-center history2";
+			depCell.innerHTML =shipments.history[0].message;
+			row.appendChild(historyCell2); */
+			
+			var timeCell2 = document.createElement("td");
+			timeCell2.className = DelColor + "time2";
+			if (this.config.critical_time > 0){
+				if (shipments.days > this.config.critical_time){
+					if (shipments.status != 'Delivered'){
+						timeCell2.className = "red time2";
+					}
+				}
+			}
+			timeCell2.innerHTML =shipments.days;
+			row.appendChild(timeCell2);
+
+/*ruff - start  */
+			var expectedCell2 = document.createElement("td");
+			expectedCell2.className = DelColor + "expected2";
+			
+			if (shipments.status == 'Delivered'){
+				//date delivered
+				expectedCell2.innerHTML =shipments.delivery_date;
+			} else {
+				//date expected
+				expectedCell2.innerHTML =shipments.expected_delivery;
+			}			
+			row.appendChild(expectedCell2);
+//ruff - end
+			
+			var messageCell = document.createElement("td");
+			messageCell.className = DelColor + "expected2";
+			messageCell.innerHTML =shipments.message;
+//			messageCell.innerHTML =today - shipments.delivery_realdate;
+			row.appendChild(messageCell);
+		}
+
+		return table;
+	},
+
+	/* getData(compliments)
+	 * Calls processData on succesfull response.
+	 */
+	getData: function() {
+		var url = this.config.apiBase + this.getParams();
+		var self = this;
+		var retry = true;
+		
+
+		var shipRequest = new XMLHttpRequest();
+		shipRequest.open("GET", url, true);
+                shipRequest.setRequestHeader("aftership-api-key",this.config.api_key);
+                shipRequest.setRequestHeader("Content-Type","application/json");
+		shipRequest.onreadystatechange = function() {
+			if (this.readyState === 4) {
+				if (this.status === 200) {
+					self.processData(JSON.parse(this.response));
+				} else if (this.status === 401) {
+					self.config.station = "";
+					self.updateDom(self.config.animationSpeed);
+
+					Log.error(self.name + ": Incorrect what so ever...");
+					retry = false;
+				} else {
+					Log.error(self.name + ": Could not load shipments.");
+				}
+
+				if (retry) {
+					self.scheduleUpdate((self.loaded) ? -1 : self.config.retryDelay);
+				}
+			}
+		};
+		shipRequest.send();
+	},
+
+	/* getParams(compliments)
+	 * Generates an url with api parameters based on the config.
+	 *
+	 * return String - URL params.
+	 */
+	getParams: function() {
+		var params = "?lang=en"
+		return params;
+	},
+
+	/* processData(data)
+	 * Uses the received data to set the various values.
+	 *
+	 *
+	 */
+	processData: function(data) {
+		this.shipments = [];
+		this.message = "";
+		
+//		Log.info('ruff: info')
+		
+		if ('trackings' in data.data) {
+
+//			Log.info('ruff: count ' + data.data.trackings.length)
+
+			for (var i = 0, count = data.data.trackings.length; i < count; i++) {
+				var shipments = data.data.trackings[i];
+
+//				Log.info('ruff: shipment ' + shipments.tag)
+
+				if('title' in shipments && 'tag' in shipments) {
+					if (this.config.show_delivered != 1){
+						if (shipments.tag == 'Delivered'){
+							continue;						
+						}
+					}
+					var parcel = {
+						name: shipments.title,
+						status: shipments.tag,
+						history: shipments.checkpoints,
+						number: shipments.tracking_number,
+						carrier: shipments.slug,
+						days: shipments.delivery_time,
+						delivery_realdate: shipments.shipment_delivery_date,
+						delivery_date: shipments.shipment_delivery_date,
+						expected_delivery: shipments.expected_delivery,
+						message:''
+					};
+					if (typeof parcel.number == null){
+						parcel.number = '';
+					}
+					if (typeof parcel.carrier == null){
+						parcel.carrier = '';
+					}
+					if (typeof parcel.days == null){
+						parcel.days = '';
+					}
+					if (parcel.delivery_realdate == null){
+						parcel.delivery_realdate = '';
+					} else {
+						parcel.delivery_realdate = moment(parcel.delivery_realdate)
+					}
+					if (parcel.delivery_date == null){
+						parcel.delivery_date = '';
+					} else {
+						parcel.delivery_date = moment(parcel.delivery_date).format("DD.MMM");
+					}
+					if (parcel.expected_delivery == null){
+						parcel.expected_delivery = '';
+					} else {
+						parcel.expected_delivery = moment(parcel.expected_delivery).format("DD.MMM");
+					}
+//					Log.info('ruff: shipment ' + shipments.tag)
+					if (parcel.status != 'Pending'){
+						if (parcel.history != null){
+							parcel.message = parcel.history[parcel.history.length -1].message;
+						}
+					} else {
+						parcel.message = '';
+					}
+
+					this.shipments.push(parcel);
+				}
+			}
+		}
+		else {
+			this.message = data.messages[0];
+		}	
+
+		this.loaded = true;
+		this.updateDom(this.config.animationSpeed);
+	},
+
+	/* scheduleUpdate()
+	 * Schedule next update.
+	 *
+	 * argument delay number - Milliseconds before next update. If empty, this.config.updateInterval is used.
+	 */
+	scheduleUpdate: function(delay) {
+		var nextLoad = this.config.updateInterval;
+		if (typeof delay !== "undefined" && delay >= 0) {
+			nextLoad = delay;
+		}
+
+		var self = this;
+		clearTimeout(this.updateTimer);
+		this.updateTimer = setTimeout(function() {
+			self.getData();
+		}, nextLoad);
+	},
 });

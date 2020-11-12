@@ -1,75 +1,56 @@
-/* Copy and paste any or all of these css entries into your custom.css file inside your
- * css folder. The functions are annotated to make things as easy as possible for you.
- * Use any colors you want! For example - "http://htmlcolorcodes.com/color-picker/"
- * Pick your color, copy and paste the HEX number. Example - #62FF00 = bright green.
+/*
+ *
+ * MMM-AfterShip by vanhoekd
+ *
+ * MIT Licensed.
+ *
  */
 
- .MMM-AfterShip .header {
-  color: #62FF00;             /* Color the title text. Default is white. */
+.MMM-AfterShip {
+  font-size: 65%;
+  -ms-transform: translate(0, -3px); /* IE 9 */
+  -webkit-transform: translate(0, -3px); /* Safari */
+  transform: translate(0, -3px);
 }
 
-.MMM-AfterShip .ID {
-  color: #FFFFFF;             /* Color the ID #. Default is white. */
-  font-size: 16px;             /* Adjust to your liking, line by line */
-/*  display: none; */         /* Uncomment if you don't want ID */
+.MMM-AfterShip table {
+   width: 600px;
+   line-height: 15px;
+   font-size: 60%;
+   th font-size: 20%;
+/*   border: 1px solid white;
+*/
+   text-align: center;
 }
 
-.MMM-AfterShip .lastUpdate {
-  color: #FFFFFF;             /* Color the Last update. Default is white. */
-  font-size: 16px;             /* Adjust to your liking, line by line */
-  /*  display: none; */         /* Uncomment if you don't want lastUpdate */
+.MMM-AfterShip th {
+   font-size: 120%;
+   border-bottom: 1px solid white;
 }
 
-.MMM-AfterShip .tracking_number {
-  color: #FFFFFF;             /* Color the tracking #. Default is white. */
-  font-size: 16px;             /* Adjust to your liking, line by line */
-  /*  display: none; */         /* Uncomment if you don't want tracking_number */
+.MMM-AfterShip .red {
+    color: #FF0000   
 }
 
-.MMM-AfterShip .courier {
-  color: #FFFFFF;             /* Color the courier. Default is white. */
-  font-size: 16px;             /* Adjust to your liking, line by line */
-  /*  display: none; */         /* Uncomment if you don't want courier */
+.MMM-AfterShip .Deliver {
+	color: #79A976
 }
 
-.MMM-AfterShip .expected_delivery {
-  color: #FFFFFF;             /* Color the expected_delivery. Default is white. */
-  font-size: 16px;             /* Adjust to your liking, line by line */
-  /*  display: none; */         /* Uncomment if you don't want expected_delivery */
+.MMM-AfterShip .DeliverToday {
+	color: #76A9A9
 }
 
-.MMM-AfterShip .shipment_type {
-  color: #FFFFFF;             /* Color the shipment_type. Default is white. */
-  font-size: 16px;             /* Adjust to your liking, line by line */
-  /*  display: none; */         /* Uncomment if you don't want shipment_type */
+.MMM-AfterShip .OnWay {
+	color: #A7A976
 }
 
-.MMM-AfterShip .status {
-  color: #FFFFFF;             /* Color the status. Default is white. */
-  font-size: 16px;             /* Adjust to your liking, line by line */
-  /*  display: none; */         /* Uncomment if you don't want status */
-}
 
-.MMM-AfterShip .Title {
-  color: #FFFFFF;             /* Color the Title. Default is white. */
-  font-size: 16px;             /* Adjust to your liking, line by line */
-  /*  display: none; */         /* Uncomment if you don't want Title */
-}
 
-.MMM-AfterShip .location {
-  color: #62FF00;             /* Color the location. Default is white. */
-  font-size: 18px;             /* Adjust to your liking, line by line */
-  /*  display: none; */         /* Uncomment if you don't want location */
-}
+/*
+	color: #77C1C1
+	color: #709898
+*/
 
-.MMM-AfterShip .checkpoint_time {
-  color: #62FF00;             /* Color the checkpoint_time. Default is white. */
-  font-size: 18px;             /* Adjust to your liking, line by line */
-  /*  display: none; */         /* Uncomment if you don't want checkpoint_time */
-}
-
-.MMM-AfterShip .message {
-  color: #62FF00;             /* Color the message. Default is white. */
-  font-size: 18px;             /* Adjust to your liking, line by line */
-  /*  display: none; */         /* Uncomment if you don't want message */
+.MMM-AfterShip .darkgrey {
+    color: #424242
 }
